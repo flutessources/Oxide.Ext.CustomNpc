@@ -14,19 +14,10 @@ namespace Oxide.Ext.CustomNpc
     [Description("test")]
     public class CustomNpcPlugin : RustPlugin
     {
-        private void OnServerInitialized()
-        {
-            //Puts("OnServerInitialized");
-            Interface.Oxide.LogInfo("CustomNpcPlugin OnServerInitialized");
-        }
-        //[HookMethod("Init")]
         private void Init()
         {
-            //Puts("Init");
-            Interface.Oxide.LogInfo("CustomNpcPlugin Init");
             new PluginsExtensionsManager();
             CustomNpc_Manager.Setup();
-            //NpcCreator_ManagerFactory.Init();
 
             Unsubscribe("OnInventoryNetworkUpdate");
         }

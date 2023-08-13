@@ -32,13 +32,13 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             where Tnpc : CustomNpc_Component
             where Tbrain : CustomNpcBrain_Component
         {
-            Interface.Oxide.LogInfo($"InstanceNpc at {position.ToString()} position ...");
+            Interface.Oxide.LogInfo($"[CustomNpc] InstanceNpc at {position.ToString()} position ...");
 
             ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
 
             if (scientistNpc == null)
             {
-                Interface.Oxide.LogInfo("Scientist npc is null");
+                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc is null");
                 return null;
             }
 
@@ -46,7 +46,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 
             if (scientistBrain == null)
             {
-                Interface.Oxide.LogInfo("Scientist npc breain is null");
+                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc breain is null");
                 return null;
             }
 
@@ -73,13 +73,13 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 
         public static CustomNpc_Entity InstanceNpc(Vector3 position, CustomNpc_Configuration configuration)
         {
-            Interface.Oxide.LogInfo($"InstanceNpc at {position.ToString()} position ...");
+            Interface.Oxide.LogInfo($"[CustomNpc] InstanceNpc at {position.ToString()} position ...");
 
             ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
             
             if (scientistNpc == null)
             {
-                Interface.Oxide.LogInfo("Scientist npc is null");
+                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc is null");
                 return null;
             }
             
@@ -87,7 +87,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 
             if (scientistBrain == null)
             {
-                Interface.Oxide.LogInfo("Scientist npc breain is null");
+                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc breain is null");
                 return null;
             }
 
@@ -124,19 +124,12 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 
         public static void OnNpcDestroyed(CustomNpc_Component component)
         {
-
-            Interface.Oxide.LogInfo($"OnNpcDestroyed1");
-
             if (component == null)
                 return;
-
-            Interface.Oxide.LogInfo($"OnNpcDestroyed2");
 
             CustomNpc_Entity entity = null;
             if (m_spawnedNpcsByComponent.TryGetValue(component, out entity) == false)
                 return;
-
-            Interface.Oxide.LogInfo($"OnNpcDestroyed3");
 
             m_spawnedNpcs.Remove(entity.Controller.Component.net.ID.Value);
             m_spawnedNpcsByComponent.Remove(component);

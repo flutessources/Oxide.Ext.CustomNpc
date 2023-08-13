@@ -26,9 +26,6 @@ namespace Oxide.Ext.CustomNpc
             {
                 Interface.Oxide.LogException("An exception was thrown!", exception.ExceptionObject as Exception);
             };
-
-            Interface.Oxide.LogInfo("Loaded");
-            //new PluginsExtensionsManager();
         }
     }
 }

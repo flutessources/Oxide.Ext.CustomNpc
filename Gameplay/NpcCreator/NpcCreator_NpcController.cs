@@ -34,7 +34,6 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
             Npc = npc;
 
             StartPosition = npc.Controller.Component.ServerPosition;
-            Interface.Oxide.LogInfo("Start position : " + StartPosition);
 
             CreatorBrain = npc.Controller.Brain.Component as NpcCreator_BrainComponent;
         }

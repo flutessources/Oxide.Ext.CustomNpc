@@ -556,7 +556,7 @@ namespace Oxide.Plugins
             public void Setup(CustomNpcBrain_Component brainComponent, Vector3 homePosition)
             {
                 HomePosition = homePosition;
-                skinID = 11162132011012;
+                skinID = 11185464824609;
                 Brain = brainComponent;
                 enableSaving = false;
                 gameObject.AwakeFromInstantiate();
@@ -1602,7 +1602,7 @@ namespace Oxide.Plugins
             private bool m_isTest;
             private bool m_isSelectedTest;
             
-            private NpcCreator_NpcController m_toKill = null;
+            private bool m_onStopping;
             
             public NpcCreator_Controller(BasePlayer player)
             {
@@ -1611,21 +1611,19 @@ namespace Oxide.Plugins
             
             public void Stop()
             {
+                m_onStopping = true;
+                
                 foreach(var npc in m_npcs.Values)
                 {
                     KillNpc(npc);
                 }
                 
-                m_npcs.Clear();
+                m_onStopping = false;
             }
             
             public void KillNpc(NpcCreator_NpcController npc)
             {
-                m_toKill = npc;
                 npc.Npc.Controller.Component.Kill();
-                m_toKill = null;
-                
-                OnRemoveNpc(npc);
             }
             
             public bool InstanceNpc(string name, Vector3 position, out NpcCreator_NpcController npc, bool select = false)
@@ -1681,9 +1679,6 @@ namespace Oxide.Plugins
                 if (npcController == null)
                 return;
                 
-                if (npcController == m_toKill)
-                return;
-                
                 bool selected = false;
                 
                 if (SelectedNpc == npcController)
@@ -1691,22 +1686,24 @@ namespace Oxide.Plugins
                     selected = true;
                 }
                 
-                
                 m_npcs.Remove(npcController.Npc.Controller.Component.net.ID.Value);
                 OnRemoveNpc(npcController);
                 
-                NpcCreator_NpcController newNpc = null;
-                
-                if (InstanceNpc(npcController.Name, npcController.StartPosition, out newNpc, selected))
+                if (m_onStopping == false)
                 {
-                    if ((selected && m_isSelectedTest) || m_isTest)
+                    NpcCreator_NpcController newNpc = null;
+                    
+                    if (InstanceNpc(npcController.Name, npcController.StartPosition, out newNpc, selected))
                     {
-                        newNpc.Npc.Controller.Component.Invoke(newNpc.CreatorBrain.StartTest, 2.0f);
+                        if ((selected && m_isSelectedTest) || m_isTest)
+                        {
+                            newNpc.Npc.Controller.Component.Invoke(newNpc.CreatorBrain.StartTest, 2.0f);
+                        }
                     }
-                }
-                else
-                {
-                    Interface.Oxide.LogInfo("Fail to spawn npc");
+                    else
+                    {
+                        Interface.Oxide.LogInfo("Fail to spawn npc");
+                    }
                 }
             }
             

@@ -62,20 +62,16 @@ namespace Oxide.Ext.CustomNpc.Gameplay.AI.States
         {
             float distanceToTarget = m_npc.Component.CurrentTarget != null ? m_npc.DistanceToTarget : 25; // Default distance
 
-            // Récupération de toutes les armes disponibles
             List<Item> availableWeapons = m_npc.Component.inventory.containerBelt.itemList
                 .Where(item => GetWeaponRangeType(item) != EWeaponRangeType.NONE)
                 .ToList();
 
-            // Si aucune arme n'est disponible, retourner null
             if (!availableWeapons.Any())
                 return null;
 
-            // Sélection de l'arme la plus adaptée en fonction de la distance à la cible
             EWeaponRangeType desiredWeaponType = GetDesiredWeaponTypeForDistance(distanceToTarget);
             Item bestWeapon = availableWeapons.FirstOrDefault(item => GetWeaponRangeType(item) == desiredWeaponType);
 
-            // Si aucune arme du type désiré n'est trouvée, prendre la première arme disponible
             if (bestWeapon == null)
                 bestWeapon = availableWeapons.First();
 
@@ -89,8 +85,6 @@ namespace Oxide.Ext.CustomNpc.Gameplay.AI.States
 
             m_lastBestWeapon = attackEntity;
             m_lastBestWeaponItem = bestWeapon;
-
-            Interface.Oxide.LogInfo("Select best weapon : " + bestWeapon.info.name);
 
             return attackEntity;
         }

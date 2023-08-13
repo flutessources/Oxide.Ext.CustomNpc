@@ -74,7 +74,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
             if (NpcCreator_Manager.NpcConfigurations.ContainsKey(name))
             {
                 config = NpcCreator_Manager.NpcConfigurations[name];
-                Interface.Oxide.LogInfo($"Instance npc {name} with configuration");
+                Interface.Oxide.LogInfo($"[CustomNpc] Instance npc {name} with configuration");
             }
             else
             {
@@ -126,7 +126,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
                 }
                 else
                 {
-                    Interface.Oxide.LogInfo("Fail to spawn npc");
+                    Interface.Oxide.LogInfo("[CustomNpc] Fail to spawn npc");
                 }
             }
         }

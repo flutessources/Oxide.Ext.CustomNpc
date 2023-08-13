@@ -148,11 +148,11 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
 
                 if (file == null)
                 {
-                    Interface.Oxide.LogWarning($"Imposible to load config {fileName} for plugin {Plugin.Name}");
+                    Interface.Oxide.LogWarning($"[CustomNpc] Imposible to load config {fileName} for plugin {Plugin.Name}");
                 }
                 else
                 {
-                    Interface.Oxide.LogInfo($"Config {fileName} for plugin {Plugin.Name} loaded");
+                    Interface.Oxide.LogInfo($"[CustomNpc] Config {fileName} for plugin {Plugin.Name} loaded");
                 }
 
                 var config = file.ReadObject<CustomNpc_Configuration>();
