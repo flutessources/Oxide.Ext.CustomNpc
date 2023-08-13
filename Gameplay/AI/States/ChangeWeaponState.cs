@@ -92,6 +92,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.AI.States
         // Todo : use config ?
         private EWeaponRangeType GetDesiredWeaponTypeForDistance(float distance)
         {
+            if (distance <= 5) return EWeaponRangeType.Melee;
             if (distance <= 8) return EWeaponRangeType.ShortDistance;
             if (distance <= 16) return EWeaponRangeType.MidleDistance;
             if (distance <= 32) return EWeaponRangeType.HighDistance;

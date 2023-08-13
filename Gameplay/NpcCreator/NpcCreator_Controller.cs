@@ -37,9 +37,10 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
         {
             m_onStopping = true;
 
-            foreach(var npc in m_npcs.Values)
+            for (int i = 0; i <  m_npcs.Count; i++)
             {
-                KillNpc(npc);
+                KillNpc(m_npcs.ElementAt(i).Value);
+                i--;
             }
 
             m_onStopping = false;

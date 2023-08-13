@@ -139,8 +139,8 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             ScientistBrain scientistBrain = GetScientistBrain(scientistNpc);
             if (scientistBrain == null) return null;
 
-            TNpcComponent customNpcComponent = AddComponentToGameObject<TNpcComponent>(scientistNpc.gameObject);
-            TBrainCoponent customBrainComponent = AddComponentToGameObject<TBrainCoponent>(scientistNpc.gameObject);
+            TNpcComponent customNpcComponent = scientistNpc.gameObject.AddComponent<TNpcComponent>();
+            TBrainCoponent customBrainComponent = scientistNpc.gameObject.AddComponent<TBrainCoponent>();
 
             CopySerializableFields(scientistNpc, customNpcComponent);
             CopySerializableFields(scientistBrain, customBrainComponent);
@@ -187,11 +187,6 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
                 Interface.Oxide.LogInfo("[CustomNpc] Scientist npc brain is null");
             }
             return scientistBrain;
-        }
-
-        private static T AddComponentToGameObject<T>(GameObject gameObject) where T : Component
-        {
-            return gameObject.AddComponent<T>();
         }
 
         private static void DestroyObject(UnityEngine.Object obj)

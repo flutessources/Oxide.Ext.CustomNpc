@@ -20,6 +20,7 @@ using Rust;
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Reflection;
@@ -39,19 +40,10 @@ namespace Oxide.Plugins
     public partial class CustomNpcPlugin : RustPlugin
     {
         #region CustomNpcPlugin.cs
-        private void OnServerInitialized()
-        {
-            //Puts("OnServerInitialized");
-            Interface.Oxide.LogInfo("CustomNpcPlugin OnServerInitialized");
-        }
-        //[HookMethod("Init")]
         private void Init()
         {
-            //Puts("Init");
-            Interface.Oxide.LogInfo("CustomNpcPlugin Init");
             new PluginsExtensionsManager();
             CustomNpc_Manager.Setup();
-            //NpcCreator_ManagerFactory.Init();
             
             Unsubscribe("OnInventoryNetworkUpdate");
         }
@@ -95,7 +87,7 @@ namespace Oxide.Plugins
                 States = new List<string>() { "DefaultIdleState", "DefaultRoamState", "DefaultChaseState", "DefaultCombatState", "DefaultHealState" }
             };
             
-            CustomNpc_Manager.InstanceNpc(player.ServerPosition, npcConfig);
+            NpcInstantiationFactory.InstanceNpcDefault(player.ServerPosition, npcConfig);
         }
         
         #region Oxide Hooks
@@ -708,10 +700,12 @@ namespace Oxide.Plugins
         #region Gameplay\Controllers\CustomNpcBrain_Controller.cs
         public class CustomNpcBrain_Controller
         {
-            public readonly CustomNpcBrain_Component Component;
-            private readonly CustomNpc_Controller m_npc;
+            public CustomNpcBrain_Component Component { get; private set; }
+            private CustomNpc_Controller m_npc;
             public CustomNpc_Controller Npc => m_npc;
-            public CustomNpcBrain_Controller(CustomNpc_Controller npc, CustomNpcBrain_Component component)
+            
+            private bool m_isInit;
+            public virtual void Initialize(CustomNpc_Controller npc, CustomNpcBrain_Component component)
             {
                 Component = component;
                 m_npc = npc;
@@ -721,10 +715,15 @@ namespace Oxide.Plugins
                 Component.onAddStates += AddStates;
                 Component.onInitializeAI += InitializeAI;
                 Component.onThink += Think;
+                
+                m_isInit = true;
             }
             
             protected virtual void AddStates()
             {
+                if (m_isInit == false)
+                return;
+                
                 Component.states = new Dictionary<AIState, BasicAIState>();
                 
                 foreach (var stateName in m_npc.Configuration.States)
@@ -746,6 +745,12 @@ namespace Oxide.Plugins
             
             protected virtual void InitializeAI()
             {
+                if (m_isInit == false)
+                {
+                    Interface.Oxide.LogError("[CustomNpc] InitializeAI brain without initialization !!");
+                    return;
+                }
+                
                 m_npc.Component.HasBrain = true;
                 Component.Navigator = m_npc.GameObject.GetComponent<BaseNavigator>();
                 Component.Navigator.Speed = m_npc.Configuration.Speed;
@@ -783,6 +788,9 @@ namespace Oxide.Plugins
             
             protected virtual void Think(float delta)
             {
+                if (m_isInit == false)
+                return;
+                
                 if (m_npc == null)
                 return;
                 
@@ -848,10 +856,10 @@ namespace Oxide.Plugins
         public class CustomNpc_Controller
         {
             public GameObject GameObject => Component.gameObject;
-            public readonly CustomNpc_Component Component;
+            public  CustomNpc_Component Component { get; private set; }
             public CustomNpcBrain_Controller Brain { get; private set; }
-            public readonly CustomNpc_Pathfinding Pathfinding;
-            public readonly CustomNpc_Configuration Configuration;
+            public CustomNpc_Pathfinding Pathfinding { get; private set; }
+            public CustomNpc_Configuration Configuration { get; private set; }
             
             public float DistanceToTarget => Vector3.Distance(GameObject.transform.position, Component.CurrentTarget.transform.position);
             public float DistanceFromHome => Vector3.Distance(GameObject.transform.position, Component.HomePosition);
@@ -859,16 +867,26 @@ namespace Oxide.Plugins
             
             private Coroutine m_healCoroutine;
             
+            private bool m_isInit;
+            
             #region Setup
-            public CustomNpc_Controller(CustomNpc_Component component, CustomNpc_Configuration configuration)
+            public virtual void Initialize(CustomNpc_Component component, CustomNpc_Configuration configuration)
             {
                 Component = component;
                 Configuration = configuration;
                 Pathfinding = new CustomNpc_Pathfinding(this);
+                
+                m_isInit = true;
             }
             
             public virtual void Start(CustomNpcBrain_Controller brain)
             {
+                if (m_isInit == false)
+                {
+                    Interface.Oxide.LogError("[CustomNpc] Start npc without initialization !!");
+                    return;
+                }
+                
                 Brain = brain;
                 Component.Setup(brain.Component, GameObject.transform.position);
                 
@@ -885,11 +903,17 @@ namespace Oxide.Plugins
             
             protected virtual void OnSpawn()
             {
+                if (m_isInit == false)
+                return;
+                
                 Setup();
             }
             
             protected virtual void OnDestroy()
             {
+                if (m_isInit == false)
+                return;
+                
                 if (m_healCoroutine != null) ServerMgr.Instance.StopCoroutine(m_healCoroutine);
                 
                 if (Brain.Component.CurrentState != null)
@@ -903,6 +927,9 @@ namespace Oxide.Plugins
             
             protected virtual void Setup()
             {
+                if (m_isInit == false)
+                return;
+                
                 Component.displayName = Configuration.Name;
                 
                 SetupNavAgent();
@@ -982,7 +1009,8 @@ namespace Oxide.Plugins
             
             protected virtual void Update()
             {
-                
+                if (m_isInit == false)
+                return;
             }
             
             
@@ -1159,15 +1187,21 @@ namespace Oxide.Plugins
             {
                 if (target == null || target.IsDestroyed || target.Health() <= 0f) return false;
                 
-                switch (target)
+                BasePlayer player = target as BasePlayer;
+                if (player != null)
                 {
-                    case BasePlayer player:
                     return CanTargetPlayer(player);
-                    case Drone drone:
-                    return CanTargetDrone(drone);
-                    default:
-                    return false;
                 }
+                else
+                {
+                    Drone drone = target as Drone;
+                    if (drone != null)
+                    {
+                        return CanTargetDrone(drone);
+                    }
+                }
+                
+                return false;
             }
             
             private bool CanTargetPlayer(BasePlayer player)
@@ -1175,7 +1209,8 @@ namespace Oxide.Plugins
                 if (player.IsDead()) return false;
                 if (player.skinID != 0 && NpcSkinsData.PlayerSkinIDs.Contains(player.skinID)) return true;
                 if (player.userID.IsSteamId()) return !player.IsSleeping() && !player.IsWounded() && !player._limitedNetworking;
-                if (player is NPCPlayer npcPlayer) return CanTargetNpcPlayer(npcPlayer);
+                NPCPlayer npcPlayer = player as NPCPlayer;
+                if (npcPlayer != null) return CanTargetNpcPlayer(npcPlayer);
                 return false;
             }
             
@@ -1385,88 +1420,17 @@ namespace Oxide.Plugins
                 RegisterDefaultStates();
             }
             
-            public static CustomNpc_Entity InstanceNpcWithCustomComponents<Tnpc, Tbrain>(Vector3 position, CustomNpc_Configuration configuration)
-            where Tnpc : CustomNpc_Component
-            where Tbrain : CustomNpcBrain_Component
-            {
-                Interface.Oxide.LogInfo($"InstanceNpc at {position.ToString()} position ...");
-                
-                ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
-                
-                if (scientistNpc == null)
-                {
-                    Interface.Oxide.LogInfo("Scientist npc is null");
-                    return null;
-                }
-                
-                ScientistBrain scientistBrain = scientistNpc.GetComponent<ScientistBrain>();
-                
-                if (scientistBrain == null)
-                {
-                    Interface.Oxide.LogInfo("Scientist npc breain is null");
-                    return null;
-                }
-                
-                CustomNpc_Component customNpcComponent = scientistNpc.gameObject.AddComponent<Tnpc>();
-                CustomNpcBrain_Component customBrainComponent = scientistNpc.gameObject.AddComponent<Tbrain>();
-                
-                CopySerializableFields(scientistNpc, customNpcComponent);
-                CopySerializableFields(scientistBrain, customBrainComponent);
-                
-                UnityEngine.Object.DestroyImmediate(scientistNpc, true);
-                UnityEngine.Object.DestroyImmediate(scientistBrain, true);
-                
-                CustomNpc_Controller customNpc = new CustomNpc_Controller(customNpcComponent, configuration);
-                CustomNpcBrain_Controller brain = new CustomNpcBrain_Controller(customNpc, customBrainComponent);
-                CustomNpc_Entity entity = new CustomNpc_Entity(customNpcComponent.gameObject, customNpc);
-                
-                
-                entity.Start(brain);
-                m_spawnedNpcs.Add(entity.Controller.Component.net.ID.Value, entity);
-                m_spawnedNpcsByComponent.Add(customNpcComponent, entity);
-                
-                return entity;
-            }
+            #region Instantiation
             
-            public static CustomNpc_Entity InstanceNpc(Vector3 position, CustomNpc_Configuration configuration)
+            public static CustomNpc_Entity CreateAndStartEntity(CustomNpc_Component component, CustomNpc_Controller npc, CustomNpcBrain_Controller brain)
             {
-                Interface.Oxide.LogInfo($"InstanceNpc at {position.ToString()} position ...");
-                
-                ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
-                
-                if (scientistNpc == null)
-                {
-                    Interface.Oxide.LogInfo("Scientist npc is null");
-                    return null;
-                }
-                
-                ScientistBrain scientistBrain = scientistNpc.GetComponent<ScientistBrain>();
-                
-                if (scientistBrain == null)
-                {
-                    Interface.Oxide.LogInfo("Scientist npc breain is null");
-                    return null;
-                }
-                
-                CustomNpc_Component customNpcComponent = scientistNpc.gameObject.AddComponent<CustomNpc_Component>();
-                CustomNpcBrain_Component customBrainComponent = scientistNpc.gameObject.AddComponent<CustomNpcBrain_Component>();
-                
-                CopySerializableFields(scientistNpc, customNpcComponent);
-                CopySerializableFields(scientistBrain, customBrainComponent);
-                
-                UnityEngine.Object.DestroyImmediate(scientistNpc, true);
-                UnityEngine.Object.DestroyImmediate(scientistBrain, true);
-                
-                CustomNpc_Controller customNpc = new CustomNpc_Controller(customNpcComponent, configuration);
-                CustomNpcBrain_Controller brain = new CustomNpcBrain_Controller(customNpc, customBrainComponent);
-                CustomNpc_Entity entity = new CustomNpc_Entity(customNpcComponent.gameObject, customNpc);
-                
+                CustomNpc_Entity entity = new CustomNpc_Entity(component.gameObject, npc);
                 entity.Start(brain);
                 m_spawnedNpcs.Add(entity.Controller.Component.net.ID.Value, entity);
-                m_spawnedNpcsByComponent.Add(customNpcComponent, entity);
-                
+                m_spawnedNpcsByComponent.Add(component, entity);
                 return entity;
             }
+            #endregion
             
             public static void DestroyAllNpcs()
             {
@@ -1481,19 +1445,12 @@ namespace Oxide.Plugins
             
             public static void OnNpcDestroyed(CustomNpc_Component component)
             {
-                
-                Interface.Oxide.LogInfo($"OnNpcDestroyed1");
-                
                 if (component == null)
                 return;
-                
-                Interface.Oxide.LogInfo($"OnNpcDestroyed2");
                 
                 CustomNpc_Entity entity = null;
                 if (m_spawnedNpcsByComponent.TryGetValue(component, out entity) == false)
                 return;
-                
-                Interface.Oxide.LogInfo($"OnNpcDestroyed3");
                 
                 m_spawnedNpcs.Remove(entity.Controller.Component.net.ID.Value);
                 m_spawnedNpcsByComponent.Remove(component);
@@ -1547,6 +1504,157 @@ namespace Oxide.Plugins
             }
             #endregion
             
+            
+        }
+        #endregion
+
+        #region Gameplay\Managers\NpcInstantiationFactory.cs
+        internal class NpcInstantiationFactory
+        {
+            // Tous les types par défaut
+            public static CustomNpc_Entity InstanceNpcDefault(Vector3 position, CustomNpc_Configuration configuration)
+            {
+                return InstanceNpc<CustomNpc_Controller, CustomNpcBrain_Controller, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // NpcController custom
+            public static CustomNpc_Entity InstanceNpcWithCustomController<TnpcController>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            {
+                return InstanceNpc<TnpcController, CustomNpcBrain_Controller, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // BrainController custom
+            public static CustomNpc_Entity InstanceNpcWithCustomBrainController<TBrainController>(Vector3 position, CustomNpc_Configuration configuration)
+            where TBrainController : CustomNpcBrain_Controller, new()
+            {
+                return InstanceNpc<CustomNpc_Controller, TBrainController, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // NpcComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomComponent<TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TNpcComponent : CustomNpc_Component
+            {
+                return InstanceNpc<CustomNpc_Controller, CustomNpcBrain_Controller, TNpcComponent, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // BrainComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomBrainComponent<TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TBrainComponent : CustomNpcBrain_Component
+            {
+                return InstanceNpc<CustomNpc_Controller, CustomNpcBrain_Controller, CustomNpc_Component, TBrainComponent>(position, configuration);
+            }
+            
+            // NpcController et BrainController custom
+            public static CustomNpc_Entity InstanceNpcWithCustomControllers<TnpcController, TBrainController>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TBrainController : CustomNpcBrain_Controller, new()
+            {
+                return InstanceNpc<TnpcController, TBrainController, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // NpcController et NpcComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomControllerAndComponent<TnpcController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TNpcComponent : CustomNpc_Component
+            {
+                return InstanceNpc<TnpcController, CustomNpcBrain_Controller, TNpcComponent, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // NpcController et BrainComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomControllerAndBrainComponent<TnpcController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TBrainComponent : CustomNpcBrain_Component
+            {
+                return InstanceNpc<TnpcController, CustomNpcBrain_Controller, CustomNpc_Component, TBrainComponent>(position, configuration);
+            }
+            
+            // BrainController et NpcComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerAndComponent<TBrainController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TBrainController : CustomNpcBrain_Controller, new()
+            where TNpcComponent : CustomNpc_Component
+            {
+                return InstanceNpc<CustomNpc_Controller, TBrainController, TNpcComponent, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // BrainController et BrainComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerAndBrainComponent<TBrainController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TBrainController : CustomNpcBrain_Controller, new()
+            where TBrainComponent : CustomNpcBrain_Component
+            {
+                return InstanceNpc<CustomNpc_Controller, TBrainController, CustomNpc_Component, TBrainComponent>(position, configuration);
+            }
+            
+            // NpcController, BrainController et NpcComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomControllerBrainControllerAndComponent<TnpcController, TBrainController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TBrainController : CustomNpcBrain_Controller, new()
+            where TNpcComponent : CustomNpc_Component
+            {
+                return InstanceNpc<TnpcController, TBrainController, TNpcComponent, CustomNpcBrain_Component>(position, configuration);
+            }
+            
+            // NpcController, BrainController et BrainComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomControllerBrainControllerAndBrainComponent<TnpcController, TBrainController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TBrainController : CustomNpcBrain_Controller, new()
+            where TBrainComponent : CustomNpcBrain_Component
+            {
+                return InstanceNpc<TnpcController, TBrainController, CustomNpc_Component, TBrainComponent>(position, configuration);
+            }
+            
+            // NpcController, NpcComponent et BrainComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomControllerComponentAndBrainComponent<TnpcController, TNpcComponent, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TNpcComponent : CustomNpc_Component
+            where TBrainComponent : CustomNpcBrain_Component
+            {
+                return InstanceNpc<TnpcController, CustomNpcBrain_Controller, TNpcComponent, TBrainComponent>(position, configuration);
+            }
+            
+            // BrainController, NpcComponent et BrainComponent custom
+            public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerComponentAndBrainComponent<TBrainController, TNpcComponent, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TBrainController : CustomNpcBrain_Controller, new()
+            where TNpcComponent : CustomNpc_Component
+            where TBrainComponent : CustomNpcBrain_Component
+            {
+                return InstanceNpc<CustomNpc_Controller, TBrainController, TNpcComponent, TBrainComponent>(position, configuration);
+            }
+            
+            private static CustomNpc_Entity InstanceNpc<TnpcController, TBrainController, TNpcComponent, TBrainCoponent>(Vector3 position, CustomNpc_Configuration configuration)
+            where TnpcController : CustomNpc_Controller, new()
+            where TBrainController : CustomNpcBrain_Controller, new()
+            where TNpcComponent : CustomNpc_Component
+            where TBrainCoponent : CustomNpcBrain_Component
+            {
+                LogInstanceNpc(position);
+                
+                ScientistNPC scientistNpc = CreateScientistNpc(position);
+                if (scientistNpc == null) return null;
+                
+                ScientistBrain scientistBrain = GetScientistBrain(scientistNpc);
+                if (scientistBrain == null) return null;
+                
+                TNpcComponent customNpcComponent = AddComponentToGameObject<TNpcComponent>(scientistNpc.gameObject);
+                TBrainCoponent customBrainComponent = AddComponentToGameObject<TBrainCoponent>(scientistNpc.gameObject);
+                
+                CopySerializableFields(scientistNpc, customNpcComponent);
+                CopySerializableFields(scientistBrain, customBrainComponent);
+                
+                DestroyObject(scientistNpc);
+                DestroyObject(scientistBrain);
+                
+                TnpcController customNpc = InitializeNpc<TnpcController>(customNpcComponent, configuration);
+                TBrainController brain = InitializeBrain<TBrainController>(customNpc, customBrainComponent);
+                
+                return CustomNpc_Manager.CreateAndStartEntity(customNpcComponent, customNpc, brain);
+            }
+            
+            private static void LogInstanceNpc(Vector3 position)
+            {
+                Interface.Oxide.LogInfo($"[CustomNpc] InstanceNpc at {position.ToString()} position ...");
+            }
+            
             private static void CopySerializableFields<T>(T src, T dst)
             {
                 FieldInfo[] srcFields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance);
@@ -1555,6 +1663,50 @@ namespace Oxide.Plugins
                     object value = field.GetValue(src);
                     field.SetValue(dst, value);
                 }
+            }
+            
+            private static ScientistNPC CreateScientistNpc(Vector3 position)
+            {
+                ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
+                if (scientistNpc == null)
+                {
+                    Interface.Oxide.LogInfo("[CustomNpc] Scientist npc is null");
+                }
+                return scientistNpc;
+            }
+            
+            private static ScientistBrain GetScientistBrain(ScientistNPC scientistNpc)
+            {
+                ScientistBrain scientistBrain = scientistNpc.GetComponent<ScientistBrain>();
+                if (scientistBrain == null)
+                {
+                    Interface.Oxide.LogInfo("[CustomNpc] Scientist npc brain is null");
+                }
+                return scientistBrain;
+            }
+            
+            private static T AddComponentToGameObject<T>(GameObject gameObject) where T : Component
+            {
+                return gameObject.AddComponent<T>();
+            }
+            
+            private static void DestroyObject(UnityEngine.Object obj)
+            {
+                UnityEngine.Object.DestroyImmediate(obj, true);
+            }
+            
+            private static TController InitializeNpc<TController>(CustomNpc_Component component, CustomNpc_Configuration configuration) where TController : CustomNpc_Controller, new()
+            {
+                TController controller = new TController();
+                controller.Initialize(component, configuration);
+                return controller;
+            }
+            
+            private static TController InitializeBrain<TController>(CustomNpc_Controller npc, CustomNpcBrain_Component component) where TController : CustomNpcBrain_Controller, new()
+            {
+                TController controller = new TController();
+                controller.Initialize(npc, component);
+                return controller;
             }
         }
         #endregion
@@ -1613,9 +1765,10 @@ namespace Oxide.Plugins
             {
                 m_onStopping = true;
                 
-                foreach(var npc in m_npcs.Values)
+                for (int i = 0; i <  m_npcs.Count; i++)
                 {
-                    KillNpc(npc);
+                    KillNpc(m_npcs.ElementAt(i).Value);
+                    i--;
                 }
                 
                 m_onStopping = false;
@@ -1650,7 +1803,7 @@ namespace Oxide.Plugins
                 if (NpcCreator_Manager.NpcConfigurations.ContainsKey(name))
                 {
                     config = NpcCreator_Manager.NpcConfigurations[name];
-                    Interface.Oxide.LogInfo($"Instance npc {name} with configuration");
+                    Interface.Oxide.LogInfo($"[CustomNpc] Instance npc {name} with configuration");
                 }
                 else
                 {
@@ -1658,7 +1811,7 @@ namespace Oxide.Plugins
                     config.Name = name;
                 }
                 
-                entity = CustomNpc_Manager.InstanceNpcWithCustomComponents<CustomNpc_Component, NpcCreator_BrainComponent>(position, config);
+                entity = NpcInstantiationFactory.InstanceNpcWithCustomBrainComponent<NpcCreator_BrainComponent>(position, config);
                 NpcCreator_NpcController npcCreator = new NpcCreator_NpcController(BasePlayer, name, entity);
                 m_npcs.Add(entity.Controller.Component.net.ID.Value, npcCreator);
                 
@@ -1702,7 +1855,7 @@ namespace Oxide.Plugins
                     }
                     else
                     {
-                        Interface.Oxide.LogInfo("Fail to spawn npc");
+                        Interface.Oxide.LogInfo("[CustomNpc] Fail to spawn npc");
                     }
                 }
             }
@@ -2120,11 +2273,11 @@ namespace Oxide.Plugins
                     
                     if (file == null)
                     {
-                        Interface.Oxide.LogWarning($"Imposible to load config {fileName} for plugin {Plugin.Name}");
+                        Interface.Oxide.LogWarning($"[CustomNpc] Imposible to load config {fileName} for plugin {Plugin.Name}");
                     }
                     else
                     {
-                        Interface.Oxide.LogInfo($"Config {fileName} for plugin {Plugin.Name} loaded");
+                        Interface.Oxide.LogInfo($"[CustomNpc] Config {fileName} for plugin {Plugin.Name} loaded");
                     }
                     
                     var config = file.ReadObject<CustomNpc_Configuration>();
@@ -2177,7 +2330,6 @@ namespace Oxide.Plugins
                 Npc = npc;
                 
                 StartPosition = npc.Controller.Component.ServerPosition;
-                Interface.Oxide.LogInfo("Start position : " + StartPosition);
                 
                 CreatorBrain = npc.Controller.Brain.Component as NpcCreator_BrainComponent;
             }
@@ -2389,20 +2541,16 @@ namespace Oxide.Plugins
             {
                 float distanceToTarget = m_npc.Component.CurrentTarget != null ? m_npc.DistanceToTarget : 25; // Default distance
                 
-                // Récupération de toutes les armes disponibles
                 List<Item> availableWeapons = m_npc.Component.inventory.containerBelt.itemList
                 .Where(item => GetWeaponRangeType(item) != EWeaponRangeType.NONE)
                 .ToList();
                 
-                // Si aucune arme n'est disponible, retourner null
                 if (!availableWeapons.Any())
                 return null;
                 
-                // Sélection de l'arme la plus adaptée en fonction de la distance à la cible
                 EWeaponRangeType desiredWeaponType = GetDesiredWeaponTypeForDistance(distanceToTarget);
                 Item bestWeapon = availableWeapons.FirstOrDefault(item => GetWeaponRangeType(item) == desiredWeaponType);
                 
-                // Si aucune arme du type désiré n'est trouvée, prendre la première arme disponible
                 if (bestWeapon == null)
                 bestWeapon = availableWeapons.First();
                 
@@ -2417,14 +2565,13 @@ namespace Oxide.Plugins
                 m_lastBestWeapon = attackEntity;
                 m_lastBestWeaponItem = bestWeapon;
                 
-                Interface.Oxide.LogInfo("Select best weapon : " + bestWeapon.info.name);
-                
                 return attackEntity;
             }
             
             // Todo : use config ?
             private EWeaponRangeType GetDesiredWeaponTypeForDistance(float distance)
             {
+                if (distance <= 5) return EWeaponRangeType.Melee;
                 if (distance <= 8) return EWeaponRangeType.ShortDistance;
                 if (distance <= 16) return EWeaponRangeType.MidleDistance;
                 if (distance <= 32) return EWeaponRangeType.HighDistance;

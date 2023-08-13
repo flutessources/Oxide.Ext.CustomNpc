@@ -352,15 +352,21 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
         {
             if (target == null || target.IsDestroyed || target.Health() <= 0f) return false;
 
-            switch (target)
+            BasePlayer player = target as BasePlayer;
+            if (player != null)
             {
-                case BasePlayer player:
-                    return CanTargetPlayer(player);
-                case Drone drone:
-                    return CanTargetDrone(drone);
-                default:
-                    return false;
+                return CanTargetPlayer(player);
             }
+            else
+            {
+                Drone drone = target as Drone;
+                if (drone != null)
+                {
+                    return CanTargetDrone(drone);
+                }
+            }
+
+            return false;
         }
 
         private bool CanTargetPlayer(BasePlayer player)
@@ -368,7 +374,8 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
             if (player.IsDead()) return false;
             if (player.skinID != 0 && NpcSkinsData.PlayerSkinIDs.Contains(player.skinID)) return true;
             if (player.userID.IsSteamId()) return !player.IsSleeping() && !player.IsWounded() && !player._limitedNetworking;
-            if (player is NPCPlayer npcPlayer) return CanTargetNpcPlayer(npcPlayer);
+            NPCPlayer npcPlayer = player as NPCPlayer;
+            if (npcPlayer != null) return CanTargetNpcPlayer(npcPlayer);
             return false;
         }
 
