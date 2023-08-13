@@ -1,12 +1,14 @@
 ﻿using Oxide.Core;
+using Oxide.Core.Plugins;
 using Oxide.Ext.CustomNpc.Gameplay.AI.States;
 using Oxide.Ext.CustomNpc.Gameplay.Components;
 using Oxide.Ext.CustomNpc.Gameplay.Configurations;
 using Oxide.Ext.CustomNpc.Gameplay.Controllers;
 using Oxide.Ext.CustomNpc.Gameplay.Entities;
+using Oxide.Plugins;
 using System;
 using System.Collections.Generic;
-using System.Reflection;
+using System.IO;
 using UnityEngine;
 
 
@@ -14,6 +16,8 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 {
     public static class CustomNpc_Manager
     {
+        public const string NPC_FILE_BASE = "npc_";
+
         private static Dictionary<ulong, CustomNpc_Entity> m_spawnedNpcs = new Dictionary<ulong, CustomNpc_Entity>();
         public static IReadOnlyDictionary<ulong, CustomNpc_Entity> SpawnedNpcs => m_spawnedNpcs;
 
@@ -39,6 +43,45 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             return entity;
         }
         #endregion
+
+        public static Dictionary<string, CustomNpc_Configuration> LoadNpcs(RustPlugin plugin)
+        {
+            Dictionary<string, CustomNpc_Configuration> npcs = null;
+
+            if (Directory.Exists($"{Interface.Oxide.DataFileSystem.Directory}/{plugin.Name}") == false)
+            {
+                return null;
+            }
+
+            var files = Interface.Oxide.DataFileSystem.GetFiles($"{plugin.Name}");
+
+            foreach (var filePath in files)
+            {
+                if (filePath.Contains(NPC_FILE_BASE) == false)
+                    continue;
+
+                string fileName = Path.GetFileNameWithoutExtension(filePath);
+                var file = Interface.Oxide.DataFileSystem.GetFile($"{plugin.Name}/{fileName}");
+
+                if (file == null)
+                {
+                    Interface.Oxide.LogWarning($"[CustomNpc] Imposible to load config {fileName} for plugin {plugin.Name}");
+                }
+                else
+                {
+                    Interface.Oxide.LogInfo($"[CustomNpc] Config {fileName} for plugin {plugin.Name} loaded");
+                }
+
+                var config = file.ReadObject<CustomNpc_Configuration>();
+
+                if (npcs == null)
+                    npcs = new Dictionary<string, CustomNpc_Configuration>();
+
+                npcs.Add(fileName.Replace(NPC_FILE_BASE, ""), config);
+            }
+
+            return npcs;
+        }
 
         public static void DestroyAllNpcs()
         {
