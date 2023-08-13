@@ -13,7 +13,7 @@ using UnityEngine;
 
 namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 {
-    internal class NpcInstantiationFactory
+    public class NpcInstantiationFactory
     {
         // Tous les types par défaut
         public static CustomNpc_Entity InstanceNpcDefault(Vector3 position, CustomNpc_Configuration configuration)
