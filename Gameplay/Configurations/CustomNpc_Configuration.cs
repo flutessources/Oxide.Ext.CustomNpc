@@ -51,12 +51,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Configurations
                 WearItems = new List<CustomNpc_WearItem> { new CustomNpc_WearItem { ShortName = "attire.egg.suit", SkinId = 0 } },
                 BeltItems = new List<CustomNpc_BeltItem>
                             {
-                                new CustomNpc_BeltItem { ShortName = "rifle.lr300", Amount = 1, SkinId = 0, Mods = new List<string> { "weapon.mod.holosight", "weapon.mod.flashlight" } },
-                                new CustomNpc_BeltItem { ShortName = "syringe.medical", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "grenade.f1", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "grenade.smoke", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "explosive.timed", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "rocket.launcher", Amount = 1, SkinId = 0, Mods = new List<string>() }
+                                new CustomNpc_BeltItem { ShortName = "rifle.lr300", Amount = 1, SkinId = 0, Mods = new List<string> { "weapon.mod.holosight", "weapon.mod.flashlight" } },  
                             },
                 CanTargetOtherNpc = false,
                 ChaseRange = 100.0f,
@@ -65,7 +60,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Configurations
                 MaxHealth = 200.0f,
                 StartHealth = 200.0f,
                 RoamRange = 10f,
-                Name = "Test",
+                Name = "Custom Npc",
                 SenseRange = 50f,
                 Speed = 7.5f,
                 VisionCone = 15.0f,
