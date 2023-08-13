@@ -21,10 +21,10 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
     public class CustomNpc_Controller
     {
         public GameObject GameObject => Component.gameObject;
-        public readonly CustomNpc_Component Component;
+        public  CustomNpc_Component Component { get; private set; }
         public CustomNpcBrain_Controller Brain { get; private set; }
-        public readonly CustomNpc_Pathfinding Pathfinding;
-        public readonly CustomNpc_Configuration Configuration;
+        public CustomNpc_Pathfinding Pathfinding { get; private set; }
+        public CustomNpc_Configuration Configuration { get; private set; }
 
         public float DistanceToTarget => Vector3.Distance(GameObject.transform.position, Component.CurrentTarget.transform.position);
         public float DistanceFromHome => Vector3.Distance(GameObject.transform.position, Component.HomePosition);
@@ -32,16 +32,26 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 
         private Coroutine m_healCoroutine;
 
+        private bool m_isInit;
+
         #region Setup
-        public CustomNpc_Controller(CustomNpc_Component component, CustomNpc_Configuration configuration)
+        public virtual void Initialize(CustomNpc_Component component, CustomNpc_Configuration configuration)
         {
             Component = component;
             Configuration = configuration;
             Pathfinding = new CustomNpc_Pathfinding(this);
+
+            m_isInit = true;
         }
 
         public virtual void Start(CustomNpcBrain_Controller brain)
         {
+            if (m_isInit == false)
+            {
+                Interface.Oxide.LogError("[CustomNpc] Start npc without initialization !!");
+                return;
+            }
+
             Brain = brain;
             Component.Setup(brain.Component, GameObject.transform.position);
 
@@ -58,11 +68,17 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 
         protected virtual void OnSpawn()
         {
+            if (m_isInit == false)
+                return;
+
             Setup();
         }
 
         protected virtual void OnDestroy()
         {
+            if (m_isInit == false)
+                return;
+
             if (m_healCoroutine != null) ServerMgr.Instance.StopCoroutine(m_healCoroutine);
 
             if (Brain.Component.CurrentState != null)
@@ -76,6 +92,9 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 
         protected virtual void Setup()
         {
+            if (m_isInit == false)
+                return;
+
             Component.displayName = Configuration.Name;
 
             SetupNavAgent();
@@ -155,7 +174,8 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 
         protected virtual void Update()
         {
-              
+            if (m_isInit == false)
+                return;
         }
 
 

@@ -61,7 +61,7 @@ namespace Oxide.Ext.CustomNpc
                 States = new List<string>() { "DefaultIdleState", "DefaultRoamState", "DefaultChaseState", "DefaultCombatState", "DefaultHealState" }
             };
 
-            CustomNpc_Manager.InstanceNpc(player.ServerPosition, npcConfig);
+            NpcInstantiationFactory.InstanceNpcDefault(player.ServerPosition, npcConfig);
         }
 
         #region Oxide Hooks

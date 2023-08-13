@@ -5,15 +5,18 @@ using static BaseAIBrain;
 using UnityEngine;
 using Oxide.Ext.CustomNpc.Gameplay.Managers;
 using Oxide.Core;
+using System.ComponentModel;
 
 namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 {
     public class CustomNpcBrain_Controller
     {
-        public readonly CustomNpcBrain_Component Component;
-        private readonly CustomNpc_Controller m_npc;
+        public CustomNpcBrain_Component Component { get; private set; }
+        private CustomNpc_Controller m_npc;
         public CustomNpc_Controller Npc => m_npc;
-        public CustomNpcBrain_Controller(CustomNpc_Controller npc, CustomNpcBrain_Component component)
+
+        private bool m_isInit;
+        public virtual void Initialize(CustomNpc_Controller npc, CustomNpcBrain_Component component)
         {
             Component = component;
             m_npc = npc;
@@ -23,10 +26,15 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
             Component.onAddStates += AddStates;
             Component.onInitializeAI += InitializeAI;
             Component.onThink += Think;
+
+            m_isInit = true;
         }
 
         protected virtual void AddStates()
         {
+            if (m_isInit == false)
+                return;
+
             Component.states = new Dictionary<AIState, BasicAIState>();
 
             foreach (var stateName in m_npc.Configuration.States)
@@ -48,6 +56,12 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 
         protected virtual void InitializeAI()
         {
+            if (m_isInit == false)
+            {
+                Interface.Oxide.LogError("[CustomNpc] InitializeAI brain without initialization !!");
+                return;
+            }
+
             m_npc.Component.HasBrain = true;
             Component.Navigator = m_npc.GameObject.GetComponent<BaseNavigator>();
             Component.Navigator.Speed = m_npc.Configuration.Speed;
@@ -85,6 +99,9 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
 
         protected virtual void Think(float delta)
         {
+            if (m_isInit == false)
+                return;
+
             if (m_npc == null)
                 return;
 

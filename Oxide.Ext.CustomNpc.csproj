@@ -413,6 +413,7 @@
     <Compile Include="Gameplay\Data\WeaponsData.cs" />
     <Compile Include="Gameplay\Entities\CustomNpc_Entity.cs" />
     <Compile Include="Gameplay\Managers\CustomNpc_Manager.cs" />
+    <Compile Include="Gameplay\Managers\NpcInstantiationFactory.cs" />
     <Compile Include="Gameplay\NpcCreator\NpcCreator_NpcController.cs" />
     <Compile Include="Gameplay\NpcCreator\NpcCreator_UI.cs" />
     <Compile Include="Gameplay\NpcCreator\NpcCreator_Controller.cs" />

@@ -82,7 +82,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
                 config.Name = name;
             }
 
-            entity = CustomNpc_Manager.InstanceNpcWithCustomComponents<CustomNpc_Component, NpcCreator_BrainComponent>(position, config);
+            entity = NpcInstantiationFactory.InstanceNpcWithCustomBrainComponent<NpcCreator_BrainComponent>(position, config);
             NpcCreator_NpcController npcCreator = new NpcCreator_NpcController(BasePlayer, name, entity);
             m_npcs.Add(entity.Controller.Component.net.ID.Value, npcCreator);
 

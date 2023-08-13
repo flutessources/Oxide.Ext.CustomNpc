@@ -28,88 +28,17 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             RegisterDefaultStates();
         }
 
-        public static CustomNpc_Entity InstanceNpcWithCustomComponents<Tnpc, Tbrain>(Vector3 position, CustomNpc_Configuration configuration)
-            where Tnpc : CustomNpc_Component
-            where Tbrain : CustomNpcBrain_Component
+        #region Instantiation
+
+        public static CustomNpc_Entity CreateAndStartEntity(CustomNpc_Component component, CustomNpc_Controller npc, CustomNpcBrain_Controller brain)
         {
-            Interface.Oxide.LogInfo($"[CustomNpc] InstanceNpc at {position.ToString()} position ...");
-
-            ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
-
-            if (scientistNpc == null)
-            {
-                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc is null");
-                return null;
-            }
-
-            ScientistBrain scientistBrain = scientistNpc.GetComponent<ScientistBrain>();
-
-            if (scientistBrain == null)
-            {
-                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc breain is null");
-                return null;
-            }
-
-            CustomNpc_Component customNpcComponent = scientistNpc.gameObject.AddComponent<Tnpc>();
-            CustomNpcBrain_Component customBrainComponent = scientistNpc.gameObject.AddComponent<Tbrain>();
-
-            CopySerializableFields(scientistNpc, customNpcComponent);
-            CopySerializableFields(scientistBrain, customBrainComponent);
-
-            UnityEngine.Object.DestroyImmediate(scientistNpc, true);
-            UnityEngine.Object.DestroyImmediate(scientistBrain, true);
-
-            CustomNpc_Controller customNpc = new CustomNpc_Controller(customNpcComponent, configuration);
-            CustomNpcBrain_Controller brain = new CustomNpcBrain_Controller(customNpc, customBrainComponent);
-            CustomNpc_Entity entity = new CustomNpc_Entity(customNpcComponent.gameObject, customNpc);
-
-
+            CustomNpc_Entity entity = new CustomNpc_Entity(component.gameObject, npc);
             entity.Start(brain);
             m_spawnedNpcs.Add(entity.Controller.Component.net.ID.Value, entity);
-            m_spawnedNpcsByComponent.Add(customNpcComponent, entity);
-
+            m_spawnedNpcsByComponent.Add(component, entity);
             return entity;
         }
-
-        public static CustomNpc_Entity InstanceNpc(Vector3 position, CustomNpc_Configuration configuration)
-        {
-            Interface.Oxide.LogInfo($"[CustomNpc] InstanceNpc at {position.ToString()} position ...");
-
-            ScientistNPC scientistNpc = GameManager.server.CreateEntity("assets/rust.ai/agents/npcplayer/humannpc/scientist/scientistnpc_heavy.prefab", position, Quaternion.identity, false) as ScientistNPC;
-            
-            if (scientistNpc == null)
-            {
-                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc is null");
-                return null;
-            }
-            
-            ScientistBrain scientistBrain = scientistNpc.GetComponent<ScientistBrain>();
-
-            if (scientistBrain == null)
-            {
-                Interface.Oxide.LogInfo("[CustomNpc] Scientist npc breain is null");
-                return null;
-            }
-
-            CustomNpc_Component customNpcComponent = scientistNpc.gameObject.AddComponent<CustomNpc_Component>();
-            CustomNpcBrain_Component customBrainComponent = scientistNpc.gameObject.AddComponent<CustomNpcBrain_Component>();
-
-            CopySerializableFields(scientistNpc, customNpcComponent);
-            CopySerializableFields(scientistBrain, customBrainComponent);
-
-            UnityEngine.Object.DestroyImmediate(scientistNpc, true);
-            UnityEngine.Object.DestroyImmediate(scientistBrain, true);
-
-            CustomNpc_Controller customNpc = new CustomNpc_Controller(customNpcComponent, configuration);
-            CustomNpcBrain_Controller brain = new CustomNpcBrain_Controller(customNpc, customBrainComponent);
-            CustomNpc_Entity entity = new CustomNpc_Entity(customNpcComponent.gameObject, customNpc);
-
-            entity.Start(brain);
-            m_spawnedNpcs.Add(entity.Controller.Component.net.ID.Value, entity);
-            m_spawnedNpcsByComponent.Add(customNpcComponent, entity);
-
-            return entity;
-        }
+        #endregion
 
         public static void DestroyAllNpcs()
         {
@@ -183,14 +112,6 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
         #endregion
 
-        private static void CopySerializableFields<T>(T src, T dst)
-        {
-            FieldInfo[] srcFields = typeof(T).GetFields(BindingFlags.Public | BindingFlags.Instance);
-            foreach (FieldInfo field in srcFields)
-            {
-                object value = field.GetValue(src);
-                field.SetValue(dst, value);
-            }
-        }
+     
     }
 }
