@@ -1,4 +1,5 @@
-﻿using System;
+﻿using Oxide.Ext.CustomNpc.Gameplay.Managers;
+using System;
 using UnityEngine;
 
 
@@ -22,7 +23,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Components
         public void Setup(CustomNpcBrain_Component brainComponent, Vector3 homePosition)
         {
             HomePosition = homePosition;
-            skinID = 11185464824609;
+            skinID = CustomNpc_Manager.CUSTOM_NPC_SKIN_ID;
             Brain = brainComponent;
             enableSaving = false;
             gameObject.AwakeFromInstantiate();

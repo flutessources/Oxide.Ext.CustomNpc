@@ -16,41 +16,41 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
     public class NpcInstantiationFactory
     {
         // Tous les types par défaut
-        public static CustomNpc_Entity InstanceNpcDefault(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcDefault(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
         {
             return InstanceNpc<CustomNpc_Controller, CustomNpcBrain_Controller, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
         }
 
         // NpcController custom
-        public static CustomNpc_Entity InstanceNpcWithCustomController<TnpcController>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomController<TnpcController>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
         {
             return InstanceNpc<TnpcController, CustomNpcBrain_Controller, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
         }
 
         // BrainController custom
-        public static CustomNpc_Entity InstanceNpcWithCustomBrainController<TBrainController>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomBrainController<TBrainController>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TBrainController : CustomNpcBrain_Controller, new()
         {
             return InstanceNpc<CustomNpc_Controller, TBrainController, CustomNpc_Component, CustomNpcBrain_Component>(position, configuration);
         }
 
         // NpcComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomComponent<TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomComponent<TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TNpcComponent : CustomNpc_Component
         {
             return InstanceNpc<CustomNpc_Controller, CustomNpcBrain_Controller, TNpcComponent, CustomNpcBrain_Component>(position, configuration);
         }
 
         // BrainComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomBrainComponent<TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomBrainComponent<TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TBrainComponent : CustomNpcBrain_Component
         {
             return InstanceNpc<CustomNpc_Controller, CustomNpcBrain_Controller, CustomNpc_Component, TBrainComponent>(position, configuration);
         }
 
         // NpcController et BrainController custom
-        public static CustomNpc_Entity InstanceNpcWithCustomControllers<TnpcController, TBrainController>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomControllers<TnpcController, TBrainController>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TBrainController : CustomNpcBrain_Controller, new()
         {
@@ -58,7 +58,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // NpcController et NpcComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomControllerAndComponent<TnpcController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomControllerAndComponent<TnpcController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TNpcComponent : CustomNpc_Component
         {
@@ -66,7 +66,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // NpcController et BrainComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomControllerAndBrainComponent<TnpcController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomControllerAndBrainComponent<TnpcController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TBrainComponent : CustomNpcBrain_Component
         {
@@ -74,7 +74,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // BrainController et NpcComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerAndComponent<TBrainController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerAndComponent<TBrainController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TBrainController : CustomNpcBrain_Controller, new()
             where TNpcComponent : CustomNpc_Component
         {
@@ -82,7 +82,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // BrainController et BrainComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerAndBrainComponent<TBrainController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerAndBrainComponent<TBrainController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TBrainController : CustomNpcBrain_Controller, new()
             where TBrainComponent : CustomNpcBrain_Component
         {
@@ -90,7 +90,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // NpcController, BrainController et NpcComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomControllerBrainControllerAndComponent<TnpcController, TBrainController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomControllerBrainControllerAndComponent<TnpcController, TBrainController, TNpcComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TBrainController : CustomNpcBrain_Controller, new()
             where TNpcComponent : CustomNpc_Component
@@ -99,7 +99,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // NpcController, BrainController et BrainComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomControllerBrainControllerAndBrainComponent<TnpcController, TBrainController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomControllerBrainControllerAndBrainComponent<TnpcController, TBrainController, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TBrainController : CustomNpcBrain_Controller, new()
             where TBrainComponent : CustomNpcBrain_Component
@@ -108,7 +108,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // NpcController, NpcComponent et BrainComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomControllerComponentAndBrainComponent<TnpcController, TNpcComponent, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomControllerComponentAndBrainComponent<TnpcController, TNpcComponent, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TNpcComponent : CustomNpc_Component
             where TBrainComponent : CustomNpcBrain_Component
@@ -117,7 +117,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
         }
 
         // BrainController, NpcComponent et BrainComponent custom
-        public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerComponentAndBrainComponent<TBrainController, TNpcComponent, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration)
+        public static CustomNpc_Entity InstanceNpcWithCustomBrainControllerComponentAndBrainComponent<TBrainController, TNpcComponent, TBrainComponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TBrainController : CustomNpcBrain_Controller, new()
             where TNpcComponent : CustomNpc_Component
             where TBrainComponent : CustomNpcBrain_Component
@@ -125,7 +125,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             return InstanceNpc<CustomNpc_Controller, TBrainController, TNpcComponent, TBrainComponent>(position, configuration);
         }
 
-        private static CustomNpc_Entity InstanceNpc<TnpcController, TBrainController, TNpcComponent, TBrainCoponent>(Vector3 position, CustomNpc_Configuration configuration)
+        private static CustomNpc_Entity InstanceNpc<TnpcController, TBrainController, TNpcComponent, TBrainCoponent>(Vector3 position, CustomNpc_Configuration configuration, bool register = false)
             where TnpcController : CustomNpc_Controller, new()
             where TBrainController : CustomNpcBrain_Controller, new()
             where TNpcComponent : CustomNpc_Component
@@ -151,7 +151,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             TnpcController customNpc = InitializeNpc<TnpcController>(customNpcComponent, configuration);
             TBrainController brain = InitializeBrain<TBrainController>(customNpc, customBrainComponent);
 
-            return CustomNpc_Manager.CreateAndStartEntity(customNpcComponent, customNpc, brain);
+            return CustomNpc_Manager.CreateAndStartEntity(customNpcComponent, customNpc, brain, register);
         }
 
         private static void LogInstanceNpc(Vector3 position)

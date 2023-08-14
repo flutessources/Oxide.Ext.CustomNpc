@@ -17,6 +17,7 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
     public static class CustomNpc_Manager
     {
         public const string NPC_FILE_BASE = "npc_";
+        public const ulong CUSTOM_NPC_SKIN_ID = 11185464824609;
 
         private static Dictionary<ulong, CustomNpc_Entity> m_spawnedNpcs = new Dictionary<ulong, CustomNpc_Entity>();
         public static IReadOnlyDictionary<ulong, CustomNpc_Entity> SpawnedNpcs => m_spawnedNpcs;
@@ -34,12 +35,17 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 
         #region Instantiation
 
-        public static CustomNpc_Entity CreateAndStartEntity(CustomNpc_Component component, CustomNpc_Controller npc, CustomNpcBrain_Controller brain)
+        public static CustomNpc_Entity CreateAndStartEntity(CustomNpc_Component component, CustomNpc_Controller npc, CustomNpcBrain_Controller brain, bool register = false)
         {
             CustomNpc_Entity entity = new CustomNpc_Entity(component.gameObject, npc);
             entity.Start(brain);
-            m_spawnedNpcs.Add(entity.Controller.Component.net.ID.Value, entity);
-            m_spawnedNpcsByComponent.Add(component, entity);
+
+            if (register)
+            {
+                m_spawnedNpcs.Add(entity.Controller.Component.net.ID.Value, entity);
+                m_spawnedNpcsByComponent.Add(component, entity);
+            }
+
             return entity;
         }
         #endregion
@@ -105,6 +111,11 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
 
             m_spawnedNpcs.Remove(entity.Controller.Component.net.ID.Value);
             m_spawnedNpcsByComponent.Remove(component);
+        }
+
+        public static bool IsVanillaNpc(ScientistNPC npc)
+        {
+            return npc.skinID != CUSTOM_NPC_SKIN_ID;
         }
 
         #region States
