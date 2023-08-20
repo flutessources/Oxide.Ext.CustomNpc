@@ -1,27 +1,48 @@
 ﻿using Oxide.Core;
+using Oxide.Core.Libraries.Covalence;
+using Oxide.Core.Logging;
 using Oxide.Core.Plugins;
 using Oxide.Ext.CustomNpc.Gameplay.Components;
 using Oxide.Ext.CustomNpc.Gameplay.Configurations;
 using Oxide.Ext.CustomNpc.Gameplay.Managers;
 using Oxide.Ext.CustomNpc.Gameplay.NpcCreator;
 using Oxide.Ext.CustomNpc.PluginExntesions;
+using Oxide.Game.Rust.Libraries;
 using Oxide.Plugins;
 using System.Collections.Generic;
+using System.Text;
 
 namespace Oxide.Ext.CustomNpc
 {
     [Info("CustomNpcPlugin", "Flutes", "0.1.0")]
     [Description("test")]
-    public class CustomNpcPlugin : RustPlugin
+    public class CustomNpcPlugin : CSPlugin
     {
+        [HookMethod("Init")]
         private void Init()
         {
             new PluginsExtensionsManager();
             CustomNpc_Manager.Setup();
 
             Unsubscribe("OnInventoryNetworkUpdate");
+            Command command = Interface.GetMod().GetLibrary<Command>("Command");
+            command.AddChatCommand("customnpc_spawn", this, nameof(CustomNpcSpawnChatCommand));
+            command.AddChatCommand("customnpc_creator_start", this, nameof(CustomNpcCreatorStartChatCommand));
+            command.AddChatCommand("customnpc_creator_stop", this, nameof(CustomNpcCreatorStopChatCommand));
+            command.AddChatCommand("customnpc_creator_stop_all", this, nameof(CustomNpcCreatorStopAllChatCommand));
+            command.AddChatCommand("customnpc_creator_edit", this, nameof(CustomNpcCreatorEditChatCommand));
+            command.AddChatCommand("customnpc_creator_select", this, nameof(CustomNpcCreatorSelectChatCommand));
+            command.AddChatCommand("customnpc_creator_unselect", this, nameof(CustomNpcCreatorUnselectChatCommand));
+            command.AddChatCommand("customnpc_creator_save_all", this, nameof(CustomNpcCreatorSaveAllChatCommand));
+            command.AddChatCommand("customnpc_creator_save_selected", this, nameof(CustomNpcCreatorSaveSelectedChatCommand) );
+            command.AddChatCommand("customnpc_creator_reload_all", this, nameof(CustomNpcCreatoReloadAllChatCommand));
+            command.AddChatCommand("customnpc_creator_reload_selected", this, nameof(CustomNpcCreatoReloadSelectedChatCommand));
+            command.AddChatCommand("customnpc_creator_test_all", this, nameof(CustomNpcCreatorTestAllChatCommand));
+            command.AddChatCommand("customnpc_creator_test_stop", this, nameof(CustomNpcCreatorTestEndChatCommand));
+
         }
 
+        [HookMethod("Unload")]
         private void Unload()
         {
             CustomNpc_Manager.DestroyAllNpcs();
@@ -64,6 +85,7 @@ namespace Oxide.Ext.CustomNpc
             NpcInstantiationFactory.InstanceNpcDefault(player.ServerPosition, npcConfig);
         }
 
+        [HookMethod("OnEntityKill")]
         #region Oxide Hooks
         private void OnEntityKill(CustomNpc_Component customNpc)
         {
@@ -76,16 +98,22 @@ namespace Oxide.Ext.CustomNpc
             //NpcCreator_ManagerFactory.OnEntityKill(customNpc);
         }
 
+        [HookMethod("OnInventoryNetworkUpdate")]
         object OnInventoryNetworkUpdate(PlayerInventory inventory, ItemContainer container, ProtoBuf.UpdateItemContainer updateItemContainer, PlayerInventory.Type type, bool broadcast)
         {
+            Interface.Oxide.LogInfo("OnInventoryNetworkUpdate");
+
             if (inventory.baseEntity == null)
                 return null;
 
-            if (NpcCreator_Manager.Controllers.ContainsKey(inventory.baseEntity.userID) == false)
-                return null;
+            if (NpcCreator_Manager.IsStarted)
+            {
+                if (NpcCreator_Manager.Controllers.ContainsKey(inventory.baseEntity.userID) == false)
+                    return null;
 
-            var controller = NpcCreator_Manager.Controllers[inventory.baseEntity.userID];
-            controller.CopyWearToSelectedNpc();
+                var controller = NpcCreator_Manager.Controllers[inventory.baseEntity.userID];
+                controller.CopyWearToSelectedNpc();
+            }
 
             return null;
         }
@@ -103,6 +131,8 @@ namespace Oxide.Ext.CustomNpc
         [ChatCommand("customnpc_creator_start")]
         private void CustomNpcCreatorStartChatCommand(BasePlayer player, string command, string[] args)
         {
+            Interface.Oxide.LogInfo("customnpc_creator_start");
+
             if (player.IsAdmin == false)
                 return;
 
@@ -124,7 +154,6 @@ namespace Oxide.Ext.CustomNpc
             NpcCreator_Manager.StartCreator(player, plugin);
             player.ChatMessage($"Success");
         }
-
 
         [ChatCommand("customnpc_creator_stop")]
         private void CustomNpcCreatorStopChatCommand(BasePlayer player, string command, string[] args)
@@ -301,5 +330,4 @@ namespace Oxide.Ext.CustomNpc
 
             player.ChatMessage($"Success");
         }
-    }
 }
