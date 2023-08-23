@@ -1,4 +1,5 @@
 ﻿using Oxide.Core;
+using Oxide.Core.Libraries;
 using Oxide.Core.Plugins;
 using Oxide.Ext.CustomNpc.Gameplay.AI.States;
 using Oxide.Ext.CustomNpc.Gameplay.Components;
@@ -8,6 +9,7 @@ using Oxide.Ext.CustomNpc.Gameplay.Entities;
 using Oxide.Plugins;
 using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using UnityEngine;
 
@@ -100,18 +102,64 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Managers
             m_spawnedNpcs.Clear();
         }
 
-        public static void OnNpcDestroyed(CustomNpc_Component component)
+        public static void OnPopulateCorpse(ScientistNPC component, ItemContainer container)
         {
             if (component == null)
                 return;
 
             CustomNpc_Entity entity = null;
-            if (m_spawnedNpcsByComponent.TryGetValue(component, out entity) == false)
+
+			Interface.Oxide.LogInfo($"[CustomNpc] OnPopulateCorpse 1");
+
+			if (m_spawnedNpcs.TryGetValue(component.net.ID.Value, out entity) == false)
                 return;
 
-            m_spawnedNpcs.Remove(entity.Controller.Component.net.ID.Value);
-            m_spawnedNpcsByComponent.Remove(component);
+			Interface.Oxide.LogInfo($"[CustomNpc] OnPopulateCorpse 2");
+
+			m_spawnedNpcs.Remove(entity.Controller.Component.net.ID.Value);
+            m_spawnedNpcsByComponent.Remove(entity.Controller.Component);
+
+            var lootTable = entity.Controller.Configuration.LootTable;
+            if (lootTable != null)
+            {
+				Interface.Oxide.LogInfo($"[CustomNpc] OnPopulateCorpse 3");
+				Loot(lootTable, container);
+            }
         }
+
+        private static void Loot(LootTableConfiguration configuration, ItemContainer container)
+        {
+			if (container.itemList != null && container.itemList.Count > 0)
+            {
+				for (int i = container.itemList.Count - 1; i >= 0; i--)
+				{
+					Item item = container.itemList[i];
+					item.RemoveFromContainer();
+					item.Remove();
+				}
+			}
+			int addedItems = 0;
+			foreach (var item in configuration.Items)
+            {
+                if (addedItems >= configuration.MaxItems)
+                    break;
+
+                int random = UnityEngine.Random.Range(0, 100);
+                if (random > item.ChanceToLoot)
+                    continue;
+
+                int randomQuantity = (item.QuantityMin != item.QuantityMax) ? UnityEngine.Random.Range(item.QuantityMin, item.QuantityMax) : item.QuantityMax;
+                var createdItem = ItemManager.FindItemDefinition(item.ItemShortname);
+
+                if (createdItem == null)
+                    continue;
+                
+                container.AddItem(createdItem, randomQuantity, item.SkinId);
+                addedItems++;
+            }
+
+			Interface.Oxide.LogInfo($"Loot 3 " + addedItems);
+		}
 
         public static bool IsVanillaNpc(ScientistNPC npc)
         {

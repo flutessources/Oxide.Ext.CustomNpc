@@ -16,93 +16,59 @@ namespace Oxide.Ext.CustomNpc
 {
     [Info("CustomNpcPlugin", "Flutes", "0.1.0")]
     [Description("test")]
-    public class CustomNpcPlugin : CSPlugin
+    public class CustomNpcPlugin : RustPlugin
     {
-        [HookMethod("Init")]
         private void Init()
         {
             new PluginsExtensionsManager();
             CustomNpc_Manager.Setup();
 
             Unsubscribe("OnInventoryNetworkUpdate");
-            Command command = Interface.GetMod().GetLibrary<Command>("Command");
-            command.AddChatCommand("customnpc_spawn", this, nameof(CustomNpcSpawnChatCommand));
-            command.AddChatCommand("customnpc_creator_start", this, nameof(CustomNpcCreatorStartChatCommand));
-            command.AddChatCommand("customnpc_creator_stop", this, nameof(CustomNpcCreatorStopChatCommand));
-            command.AddChatCommand("customnpc_creator_stop_all", this, nameof(CustomNpcCreatorStopAllChatCommand));
-            command.AddChatCommand("customnpc_creator_edit", this, nameof(CustomNpcCreatorEditChatCommand));
-            command.AddChatCommand("customnpc_creator_select", this, nameof(CustomNpcCreatorSelectChatCommand));
-            command.AddChatCommand("customnpc_creator_unselect", this, nameof(CustomNpcCreatorUnselectChatCommand));
-            command.AddChatCommand("customnpc_creator_save_all", this, nameof(CustomNpcCreatorSaveAllChatCommand));
-            command.AddChatCommand("customnpc_creator_save_selected", this, nameof(CustomNpcCreatorSaveSelectedChatCommand) );
-            command.AddChatCommand("customnpc_creator_reload_all", this, nameof(CustomNpcCreatoReloadAllChatCommand));
-            command.AddChatCommand("customnpc_creator_reload_selected", this, nameof(CustomNpcCreatoReloadSelectedChatCommand));
-            command.AddChatCommand("customnpc_creator_test_all", this, nameof(CustomNpcCreatorTestAllChatCommand));
-            command.AddChatCommand("customnpc_creator_test_stop", this, nameof(CustomNpcCreatorTestEndChatCommand));
 
         }
 
-        [HookMethod("Unload")]
         private void Unload()
         {
             CustomNpc_Manager.DestroyAllNpcs();
-        }
-
-        private void SpawnTest(BasePlayer player)
-        {
-            CustomNpc_Configuration npcConfig = new CustomNpc_Configuration()
+            if (NpcCreator_Manager.IsStarted)
             {
-                DamageScale = 1,
-                DisableRadio = true,
-                AgentTypeID = -1372625422,
-                MemoryDuration = 10.0f,
-                AreaMask = 1,
-                AttackRangeMultiplier = 1.0f,
-                WearItems = new List<CustomNpc_WearItem> { new CustomNpc_WearItem { ShortName = "attire.egg.suit", SkinId = 0 } },
-                BeltItems = new List<CustomNpc_BeltItem>
-                            {
-                                new CustomNpc_BeltItem { ShortName = "rifle.lr300", Amount = 1, SkinId = 0, Mods = new List<string> { "weapon.mod.holosight", "weapon.mod.flashlight" } },
-                                new CustomNpc_BeltItem { ShortName = "syringe.medical", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "grenade.f1", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "grenade.smoke", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "explosive.timed", Amount = 10, SkinId = 0, Mods = new List<string>() },
-                                new CustomNpc_BeltItem { ShortName = "rocket.launcher", Amount = 1, SkinId = 0, Mods = new List<string>() }
-                            },
-                CanTargetOtherNpc = false,
-                ChaseRange = 100.0f,
-                CheckVisionCone = false,
-                ListenRange = 10.0f,
-                MaxHealth = 200.0f,
-                StartHealth = 200.0f,
-                RoamRange = 10f,
-                Name = "Test",
-                SenseRange = 50f,
-                Speed = 7.5f,
-                VisionCone = 15.0f,
-                States = new List<string>() { "DefaultIdleState", "DefaultRoamState", "DefaultChaseState", "DefaultCombatState", "DefaultHealState" }
-            };
+                NpcCreator_Manager.Stop();
 
-            NpcInstantiationFactory.InstanceNpcDefault(player.ServerPosition, npcConfig);
+			}
         }
 
-        [HookMethod("OnEntityKill")]
-        #region Oxide Hooks
-        private void OnEntityKill(CustomNpc_Component customNpc)
-        {
-            CustomNpc_Manager.OnNpcDestroyed(customNpc);
+		protected override object InvokeMethod(HookMethod method, object[] args)
+		{
+			return method.Method.Invoke(this, args);
+		}
+
+
+		#region Oxide Hooks
+		BaseCorpse OnCorpsePopulate(BasePlayer player, BaseCorpse corpse)
+		{
+            if (player == null || corpse == null)
+                return null;
+
+            ScientistNPC npc = player as ScientistNPC;
+            if (npc == null)
+                return null;
+
+            NPCPlayerCorpse npcCorpse = corpse as NPCPlayerCorpse;
+            if (npcCorpse == null)
+                return null;
+
+            CustomNpc_Manager.OnPopulateCorpse(npc, npcCorpse.containers[0]);
 
             if (NpcCreator_Manager.IsStarted)
             {
-                NpcCreator_Manager.OnEntityKill(customNpc);
+                NpcCreator_Manager.OnEntityKill(npc);
             }
-            //NpcCreator_ManagerFactory.OnEntityKill(customNpc);
+
+            return null;
         }
 
-        [HookMethod("OnInventoryNetworkUpdate")]
         object OnInventoryNetworkUpdate(PlayerInventory inventory, ItemContainer container, ProtoBuf.UpdateItemContainer updateItemContainer, PlayerInventory.Type type, bool broadcast)
         {
-            Interface.Oxide.LogInfo("OnInventoryNetworkUpdate");
-
             if (inventory.baseEntity == null)
                 return null;
 
@@ -119,14 +85,6 @@ namespace Oxide.Ext.CustomNpc
         }
         #endregion
 
-        [ChatCommand("customnpc_spawn")]
-        private void CustomNpcSpawnChatCommand(BasePlayer player, string command, string[] args)
-        {
-            if (player.IsAdmin == false)
-                return;
-
-            SpawnTest(player);
-        }
 
         [ChatCommand("customnpc_creator_start")]
         private void CustomNpcCreatorStartChatCommand(BasePlayer player, string command, string[] args)
@@ -330,4 +288,5 @@ namespace Oxide.Ext.CustomNpc
 
             player.ChatMessage($"Success");
         }
+    }
 }

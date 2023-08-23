@@ -401,7 +401,10 @@
     <Compile Include="Gameplay\Components\CustomNpc_Component.cs" />
     <Compile Include="Gameplay\Configurations\CustomNpc_BeltItem.cs" />
     <Compile Include="Gameplay\Configurations\CustomNpc_Configuration.cs" />
+    <Compile Include="Gameplay\Configurations\CustomNpc_Ranges.cs" />
     <Compile Include="Gameplay\Configurations\CustomNpc_WearItem.cs" />
+    <Compile Include="Gameplay\Configurations\LootItemConfiguration.cs" />
+    <Compile Include="Gameplay\Configurations\LootTableConfiguration.cs" />
     <Compile Include="Gameplay\Controllers\CustomNpcBrain_Controller.cs" />
     <Compile Include="Gameplay\Controllers\CustomNpc_Controller.cs" />
     <Compile Include="Gameplay\AI\CustomNpc_Pathfinding.cs" />

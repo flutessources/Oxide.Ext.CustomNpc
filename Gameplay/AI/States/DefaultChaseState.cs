@@ -37,7 +37,7 @@
         {
             base.CanEnter();
 
-            if (m_npc.DistanceFromHome > m_npc.Configuration.ChaseRange)
+            if (m_npc.DistanceFromHome > m_npc.Configuration.Ranges.ChaseRange)
                 return false;
 
             if (m_npc.Component.CurrentTarget == null)

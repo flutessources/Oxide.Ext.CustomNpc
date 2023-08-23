@@ -83,11 +83,18 @@ namespace Oxide.Ext.CustomNpc.Gameplay.NpcCreator
             }
 
             IsStarted = false;
-            m_controllers = null;
+            m_controllers.Clear();
+            m_editedNpcs.Clear();
+            m_npcConfigurations.Clear();
+
         }
 
-        public static void OnEntityKill(CustomNpc_Component npcComponent)
+        public static void OnEntityKill(ScientistNPC npcComponent)
         {
+            var brain = npcComponent.Brain as NpcCreator_BrainComponent;
+            if (brain == null)
+                return;
+
             if (m_editedNpcs.ContainsKey(npcComponent.displayName) == false)
                 return;
 

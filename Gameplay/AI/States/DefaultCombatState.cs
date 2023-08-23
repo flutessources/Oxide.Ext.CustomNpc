@@ -100,7 +100,7 @@
             if (m_npc.Component.CurrentWeapon == null) return false;
             if (m_npc.Component.CurrentWeapon.ShortPrefabName == "mgl.entity" && m_npc.Component.IsReloadGrenadeLauncher) return false;
             if (m_npc.Component.CurrentWeapon is FlameThrower && m_npc.Component.IsReloadFlameThrower) return false;
-            if (m_npc.DistanceFromHome > m_npc.Configuration.ChaseRange) return false;
+            if (m_npc.DistanceFromHome > m_npc.Configuration.Ranges.ChaseRange) return false;
             if (m_npc.Component.CurrentTarget == null) return false;
             if (m_npc.DistanceToTarget > m_npc.Component.EngagementRange()) return false;
             if (!m_npc.Component.CanSeeTarget(m_npc.Component.CurrentTarget)) return false;

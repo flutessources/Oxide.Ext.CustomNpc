@@ -67,17 +67,17 @@ namespace Oxide.Ext.CustomNpc.Gameplay.Controllers
             Component.Navigator.Speed = m_npc.Configuration.Speed;
             Component.InvokeRandomized(Component.DoMovementTick, 1f, 0.1f, 0.01f);
 
-            Component.AttackRangeMultiplier = m_npc.Configuration.AttackRangeMultiplier;
+            Component.AttackRangeMultiplier = m_npc.Configuration.Ranges.AttackRangeMultiplier;
             Component.MemoryDuration = m_npc.Configuration.MemoryDuration;
-            Component.SenseRange = Math.Abs(m_npc.Configuration.SenseRange);
+            Component.SenseRange = Math.Abs(m_npc.Configuration.Ranges.SenseRange);
             Component.TargetLostRange = Component.SenseRange * 2f;
-            Component.VisionCone = Vector3.Dot(Vector3.forward, Quaternion.Euler(0f, m_npc.Configuration.VisionCone, 0f) * Vector3.forward);
-            Component.CheckVisionCone = m_npc.Configuration.CheckVisionCone;
+            Component.VisionCone = Vector3.Dot(Vector3.forward, Quaternion.Euler(0f, m_npc.Configuration.Ranges.VisionCone, 0f) * Vector3.forward);
+            Component.CheckVisionCone = m_npc.Configuration.Ranges.CheckVisionCone;
             Component.CheckLOS = true;
             Component.IgnoreNonVisionSneakers = true;
             Component.MaxGroupSize = 0;
-            Component.ListenRange = m_npc.Configuration.ListenRange;
-            Component.HostileTargetsOnly = m_npc.Configuration.SenseRange < 0f;
+            Component.ListenRange = m_npc.Configuration.Ranges.ListenRange;
+            Component.HostileTargetsOnly = m_npc.Configuration.Ranges.SenseRange < 0f;
             Component.IgnoreSafeZonePlayers = !Component.HostileTargetsOnly;
             Component.SenseTypes = EntityType.Player;
             Component.RefreshKnownLOS = false;
